@@ -1,6 +1,8 @@
 import type { ComponentType } from 'react';
 import type { MDXProps } from 'mdx/types';
 
+export type Locale = 'sv' | 'en';
+
 export const heroContent = {
   badge: 'Du behöver bara ett ja',
   title: 'Checklistan som gör LIA-jakten tydlig, lugn och genomförbar.',
@@ -63,6 +65,24 @@ export const faqItems = [
     title: 'Ingen svarar på mina utskick, ska jag ge upp?',
     content:
       'Nej! Granska vad du skickat, be om feedback från klasskamrater och bredda listan med bolag. Följ upp en gång till innan du går vidare.'
+  },
+  {
+    id: 'follow-up',
+    title: 'Hur ofta kan jag följa upp utan att verka tjatig?',
+    content:
+      'Skicka en vänlig påminnelse efter 5–7 arbetsdagar. Om du inte får svar, gör ett sista försök efter ytterligare en vecka och gå sedan vidare till nästa företag.'
+  },
+  {
+    id: 'swedish-or-english',
+    title: 'Ska jag skriva på svenska eller engelska?',
+    content:
+      'Spegla företaget. Är deras sajt och annonser på svenska kan du skriva på svenska. Om du är osäker eller om bolaget är internationellt? Kör engelska och visa att du är bekväm i båda språken.'
+  },
+  {
+    id: 'salary-question',
+    title: 'Får jag prata om ersättning under intervjun?',
+    content:
+      'Vänta tills företaget tar upp det eller tills du kommer längre i processen. Fokus i början är att visa vad du vill lära dig och hur du kan bidra.'
   }
 ];
 
@@ -73,9 +93,11 @@ export interface ResourceFrontmatter {
   type: ResourceType;
   summary: string;
   slug: string;
-  stage: 'prepare' | 'outreach' | 'momentum';
+  stage: 'prepare' | 'network' | 'outreach' | 'interviews' | 'momentum';
   order: number;
   downloadLabel?: string;
+  downloadUrl?: string;
+  locale?: Locale;
 }
 
 interface ResourceModule {
@@ -93,20 +115,34 @@ export interface Resource extends ResourceFrontmatter {
 
 export type ResourceSummary = Omit<Resource, 'Content'>;
 
-export const resources: Resource[] = Object.values(resourceModules)
-  .map((module) => ({
-    ...module.frontmatter,
-    Content: module.default
-  }))
+const resources: Resource[] = Object.values(resourceModules)
+  .map((module) => {
+    const frontmatter = module.frontmatter ?? ({} as ResourceFrontmatter);
+    const locale = (frontmatter.locale ?? 'sv') as Locale;
+
+    return {
+      ...frontmatter,
+      locale,
+      Content: module.default
+    } as Resource;
+  })
   .sort((a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER));
 
-export const resourceSummaries: ResourceSummary[] = resources.map(({ Content, ...summary }) => summary);
+const resourceSummaries: ResourceSummary[] = resources.map(({ Content, ...summary }) => summary);
 
-export const getResourceBySlug = (slug: string) =>
-  resources.find((resource) => resource.slug === slug);
+export const getResourceBySlug = (slug: string, locale: Locale = 'sv') =>
+  resources.find((resource) => resource.slug === slug && resource.locale === locale) ??
+  resources.find((resource) => resource.slug === slug && resource.locale === 'sv');
 
-export const getResourceSummaryBySlug = (slug: string) =>
-  resourceSummaries.find((resource) => resource.slug === slug);
+export const getResourceSummaryBySlug = (slug: string, locale: Locale = 'sv') =>
+  resourceSummaries.find((resource) => resource.slug === slug && resource.locale === locale) ??
+  resourceSummaries.find((resource) => resource.slug === slug && resource.locale === 'sv');
+
+export const getResources = (locale: Locale = 'sv') =>
+  resources.filter((resource) => resource.locale === locale);
+
+export const getResourceSummaries = (locale: Locale = 'sv') =>
+  resourceSummaries.filter((resource) => resource.locale === locale);
 
 export interface PlanTask {
   id: string;
@@ -121,6 +157,7 @@ export interface PlanStage {
   milestone: string;
   tasks: PlanTask[];
   resourceSlugs?: string[];
+  tips?: string[];
 }
 
 export const planStages: PlanStage[] = [
@@ -149,7 +186,12 @@ export const planStages: PlanStage[] = [
         text: 'Skriv en kort hisspitch (30 sekunder) om vem du är och vad du söker.'
       }
     ],
-    resourceSlugs: ['linkedin-guide']
+    resourceSlugs: ['linkedin-guide'],
+    tips: [
+      'Be en klasskompis eller handledare ge snabb feedback på LinkedIn och CV – två ögon ser mer.',
+      'Dokumentera varje projekt med README, skärmbilder och lärdomar så rekryterare förstår din process.',
+      'Kör en testinspelning av din pitch på mobilen och lyssna – byt ut ord som känns hackiga.'
+    ]
   },
   {
     id: 'network',
@@ -174,6 +216,12 @@ export const planStages: PlanStage[] = [
         id: 'network-follow',
         text: 'Följ tre företag eller handledare på LinkedIn och börja engagera dig i deras inlägg.'
       }
+    ],
+    resourceSlugs: ['natverksplan'],
+    tips: [
+      'Var specifik när du ber om hjälp – nämn bransch, period och vad du kan erbjuda.',
+      'Följ upp tack-svar inom 24 timmar så relationen känns levande.',
+      'Använd ansökningsloggen för att markera "varm kontakt" och vad nästa steg är.'
     ]
   },
   {
@@ -201,7 +249,12 @@ export const planStages: PlanStage[] = [
         text: 'Ring ett företag och fråga vem som ansvarar för LIA-praktikanter.'
       }
     ],
-    resourceSlugs: ['kontaktmallar']
+    resourceSlugs: ['kontaktmallar'],
+    tips: [
+      'Skriv alltid två meningar om varför just det företaget – ingen vill ha massmejl.',
+      'Planera uppföljning redan när du skickar första mailet och notera datum i loggen.',
+      'Ring små företag på förmiddagen – då har de ofta mer tid att prata.'
+    ]
   },
   {
     id: 'interviews',
@@ -226,6 +279,12 @@ export const planStages: PlanStage[] = [
         id: 'interview-reflect',
         text: 'Skapa en mall för att skriva ner vad som gick bra och vad du vill förbättra efter varje intervju.'
       }
+    ],
+    resourceSlugs: ['intervjuguide'],
+    tips: [
+      'Öva dina stories högt – gärna med någon som kan ställa följdfrågor.',
+      'Förbered ett block med dina frågor så du slipper improvisera under intervjun.',
+      'Skriv tack-mejl samma dag – repetera ett guldkorn från samtalet.'
     ]
   },
   {
@@ -253,11 +312,16 @@ export const planStages: PlanStage[] = [
         text: 'Fira varje svar eller intervju – skriv ner varför det var ett steg framåt.'
       }
     ],
-    resourceSlugs: ['ansokningslogg']
+    resourceSlugs: ['ansokningslogg', 'progress-logg', 'veckoreflektion', 'firaframsteg'],
+    tips: [
+      'Sätt ett rimligt veckomål (t.ex. tre utskick) och justera efter energinivå.',
+      'Blocka kalendern för reflektion varje fredag – bestäm vad du fortsätter, stoppar, startar.',
+      'Fira varje aktivitet du genomför, inte bara svaren – det bygger momentum.'
+    ]
   }
 ];
 
-export const getRecommendedResources = (slugs: string[] = []) =>
+export const getRecommendedResources = (slugs: string[] = [], locale: Locale = 'sv') =>
   slugs
-    .map((slug) => getResourceSummaryBySlug(slug))
+    .map((slug) => getResourceSummaryBySlug(slug, locale))
     .filter((item): item is ResourceSummary => Boolean(item));

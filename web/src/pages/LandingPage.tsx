@@ -10,8 +10,9 @@ import {
   faqItems,
   heroContent,
   journeyHighlights,
-  resourceSummaries
+  getResourceSummaries
 } from '../content';
+import { useLocale } from '../i18n/LocaleContext';
 
 interface LandingPageProps {
   onOpenResource: (slug: string) => void;
@@ -20,6 +21,7 @@ interface LandingPageProps {
 const CHECKLIST_STORAGE_KEY = 'internship-checklist-demo';
 
 const LandingPage = ({ onOpenResource }: LandingPageProps) => {
+  const { locale } = useLocale();
   const [completed, setCompleted] = useState<string[]>([]);
 
   useEffect(() => {
@@ -78,7 +80,7 @@ const LandingPage = ({ onOpenResource }: LandingPageProps) => {
         <ResourceShowcase
           title="Resurser att släppa först"
           description="Guider och mallar som bygger vidare på innehållet i produktbriefen. Ladda ner eller läs direkt i appen."
-          items={resourceSummaries}
+          items={getResourceSummaries(locale)}
           onSelect={onOpenResource}
         />
 

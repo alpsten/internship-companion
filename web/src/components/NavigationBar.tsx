@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const linkClasses = (
   { isActive }: { isActive: boolean }
@@ -30,12 +31,16 @@ const NavigationBar = () => {
           <NavLink className={linkClasses} to="/plan">
             Planera LIA
           </NavLink>
-          <NavLink className={linkClasses} to="/#resurser">
+          <NavLink className={linkClasses} to="/resources">
             Resurser
+          </NavLink>
+          <NavLink className={linkClasses} to="/about">
+            Om
           </NavLink>
           <a className={linkClasses({ isActive: false })} href="docs/product-brief.md">
             Produktbrief
           </a>
+          <LanguageSwitcher />
         </nav>
       </div>
     </header>

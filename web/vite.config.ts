@@ -4,7 +4,10 @@ import mdx from '@mdx-js/rollup';
 import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
 
+const basePath = process.env.BASE_PATH ?? '/';
+
 export default defineConfig({
+  base: basePath,
   plugins: [
     react(),
     mdx({

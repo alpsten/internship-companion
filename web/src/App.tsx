@@ -6,8 +6,12 @@ import SiteFooter from './components/SiteFooter';
 import { getResourceBySlug } from './content';
 import LandingPage from './pages/LandingPage';
 import PlanPage from './pages/PlanPage';
+import ResourcesPage from './pages/ResourcesPage';
+import AboutPage from './pages/AboutPage';
+import { useLocale } from './i18n/LocaleContext';
 
 function App() {
+  const { locale } = useLocale();
   const [activeResource, setActiveResource] = useState<string | null>(null);
   const location = useLocation();
 
@@ -31,8 +35,8 @@ function App() {
   }, [location]);
 
   const selectedResource = useMemo(
-    () => (activeResource ? getResourceBySlug(activeResource) ?? null : null),
-    [activeResource]
+    () => (activeResource ? getResourceBySlug(activeResource, locale) ?? null : null),
+    [activeResource, locale]
   );
 
   return (
@@ -42,6 +46,8 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage onOpenResource={setActiveResource} />} />
           <Route path="/plan" element={<PlanPage onOpenResource={setActiveResource} />} />
+          <Route path="/resources" element={<ResourcesPage onOpenResource={setActiveResource} />} />
+          <Route path="/about" element={<AboutPage />} />
         </Routes>
       </div>
       <SiteFooter />
@@ -52,6 +58,8 @@ function App() {
             ? {
                 title: selectedResource.title,
                 type: selectedResource.type,
+                downloadLabel: selectedResource.downloadLabel,
+                downloadUrl: selectedResource.downloadUrl,
                 Content: selectedResource.Content
               }
             : null

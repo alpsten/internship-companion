@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:pages": "tsc && cross-env BASE_PATH=/internship-checklist vite build && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\"",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --max-warnings 0",
     "format": "prettier --check ."
@@ -21,6 +22,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.3",
     "@vitejs/plugin-react": "^4.3.0",
+    "cross-env": "^7.0.3",
     "@typescript-eslint/eslint-plugin": "^7.1.1",
     "@typescript-eslint/parser": "^7.1.1",
     "autoprefixer": "^10.4.16",

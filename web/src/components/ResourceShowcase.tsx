@@ -6,6 +6,8 @@ type ResourceItem = {
   title: string;
   type: ResourceType;
   summary: string;
+  downloadLabel?: string;
+  downloadUrl?: string;
 };
 
 interface ResourceShowcaseProps {
@@ -39,13 +41,25 @@ const ResourceShowcase: FC<ResourceShowcaseProps> = ({
             <h3 className="text-lg font-semibold text-slate-900">{resource.title}</h3>
             <p className="text-sm text-slate-600">{resource.summary}</p>
           </div>
-          <button
-            type="button"
-            className="mt-6 inline-flex items-center gap-2 self-start rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-accent"
-            onClick={() => onSelect(resource.slug)}
-          >
-            Förhandsvisa
-          </button>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-accent"
+              onClick={() => onSelect(resource.slug)}
+            >
+              Förhandsvisa
+            </button>
+            {resource.downloadUrl && resource.downloadLabel ? (
+              <a
+                className="inline-flex items-center gap-2 rounded-full border border-primary px-5 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
+                href={resource.downloadUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {resource.downloadLabel}
+              </a>
+            ) : null}
+          </div>
         </article>
       ))}
     </div>
