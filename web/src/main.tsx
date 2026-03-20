@@ -4,13 +4,16 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 import { LocaleProvider } from './i18n/LocaleContext';
+import { ThemeProvider } from './theme/ThemeContext';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <LocaleProvider>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </LocaleProvider>
+    <ThemeProvider>
+      <LocaleProvider>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <App />
+        </BrowserRouter>
+      </LocaleProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );

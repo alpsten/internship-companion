@@ -1,25 +1,41 @@
 import { useLocale } from '../i18n/LocaleContext';
 
+const languageCopy = {
+  sv: {
+    groupLabel: 'Språk',
+    englishAria: 'Byt språk till engelska',
+    swedishAria: 'Byt språk till svenska'
+  },
+  en: {
+    groupLabel: 'Language',
+    englishAria: 'Switch language to English',
+    swedishAria: 'Switch language to Swedish'
+  }
+} as const;
+
 const LanguageSwitcher = () => {
   const { locale, setLocale } = useLocale();
+  const copy = languageCopy[locale] ?? languageCopy.en;
 
   return (
-    <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-xs text-slate-500">
+    <div className="control-group" role="group" aria-label={copy.groupLabel}>
       <button
         type="button"
-        className={`font-semibold ${locale === 'sv' ? 'text-primary' : ''}`}
-        onClick={() => setLocale('sv')}
-      >
-        Svenska
-      </button>
-      <span aria-hidden="true">/</span>
-      <button
-        type="button"
-        className="cursor-not-allowed text-slate-400"
+        className={`control-segment ${locale === 'en' ? 'control-segment-active' : ''}`}
         onClick={() => setLocale('en')}
-        title="Engelsk version kommer snart"
+        aria-pressed={locale === 'en'}
+        aria-label={copy.englishAria}
       >
-        English
+        EN
+      </button>
+      <button
+        type="button"
+        className={`control-segment ${locale === 'sv' ? 'control-segment-active' : ''}`}
+        onClick={() => setLocale('sv')}
+        aria-pressed={locale === 'sv'}
+        aria-label={copy.swedishAria}
+      >
+        SV
       </button>
     </div>
   );

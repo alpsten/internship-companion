@@ -1,5 +1,13 @@
-import { createContext, PropsWithChildren, useContext, useMemo, useState } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useMemo,
+  useState
+} from 'react';
 import type { Locale } from '../content';
+import { trackEvent } from '../analytics';
 
 type LocaleContextValue = {
   locale: Locale;
@@ -7,27 +15,41 @@ type LocaleContextValue = {
 };
 
 const LocaleContext = createContext<LocaleContextValue | undefined>(undefined);
+const LOCALE_STORAGE_KEY = 'internship-companion-locale';
 
-export const LocaleProvider = ({ children }: PropsWithChildren) => {
-  const [locale, setLocaleState] = useState<Locale>('sv');
+type LocaleProviderProps = PropsWithChildren<unknown>;
 
-  const setLocale = (next: Locale) => {
-    if (next !== 'sv') {
-      console.warn('Engelsk version kommer snart.');
+export function LocaleProvider({ children }: LocaleProviderProps) {
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    if (typeof window === 'undefined') {
+      return 'en';
     }
-    setLocaleState(next);
-  };
+    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+    return stored === 'sv' || stored === 'en' ? (stored as Locale) : 'en';
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+  }, [locale]);
 
   const value = useMemo(
     () => ({
       locale,
-      setLocale
+      setLocale: (next: Locale) => {
+        if (next !== locale) {
+          trackEvent('language_changed', { locale: next });
+        }
+        setLocaleState(next);
+      }
     }),
     [locale]
   );
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
-};
+}
 
 export const useLocale = () => {
   const context = useContext(LocaleContext);

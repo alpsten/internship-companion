@@ -1,13 +1,14 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        primary: '#0EA5E9',
-        accent: '#2563EB',
-        surface: '#F8FAFC',
+        primary: '#2563EB',
+        accent: '#1E3A8A',
+        surface: '#E2E8F0',
         success: '#10B981',
         warning: '#F59E0B',
         info: '#6366F1',
@@ -18,8 +19,8 @@ const config: Config = {
         '3xl': '1.75rem'
       },
       boxShadow: {
-        card: '0 12px 24px -18px rgba(15, 23, 42, 0.25)',
-        elevated: '0 16px 40px -24px rgba(37, 99, 235, 0.35)'
+        card: '0 10px 22px -18px rgba(15, 23, 42, 0.14)',
+        elevated: '0 14px 32px -24px rgba(30, 58, 138, 0.22)'
       },
       spacing: {
         18: '4.5rem'
