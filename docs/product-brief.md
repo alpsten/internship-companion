@@ -1,7 +1,7 @@
 # Product Brief
 
 ## Context
-Many Swedish software students must complete a LIA (internship) to graduate. The process feels unstructured, stressful, and opaque, especially when students juggle coursework with outreach, interview prep, and follow-ups. The Internship Checklist project should give them a calm, actionable companion they can trust.
+Many Swedish software students must complete a LIA (internship) to graduate. The process feels unstructured, stressful, and opaque, especially when students juggle coursework with outreach, interview prep, and follow-ups. The Internship Companion project should give them a calm, actionable companion they can trust.
 
 ## Audience
 - **Primary:** Swedish-speaking developer students searching for a LIA placement in the next 3–9 months.

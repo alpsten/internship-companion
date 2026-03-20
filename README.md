@@ -1,16 +1,16 @@
-# Internship Checklist
+# Internship Companion
 
 Helping Swedish LIA students plan, track, and land their internships with clarity, momentum, and a calm mind.
 
 This repository contains:
-- A React/TypeScript frontend (Vite + Tailwind) that exposes the internship checklist and planner
+- A React/TypeScript frontend (Vite + Tailwind) that exposes the Internship Companion experience
 - Content authored in MDX (guides, templates, trackers) under `web/src/content/resources`
 - Documentation for collaborators (`docs/`)
 
 ## Project Status
 - **Phase:** Discovery & planning
 - **Focus:** Validate information architecture, agree on MVP scope, ship a visible frontend shell quickly
-- **Primary language:** Swedish (English toggle planned)
+- **Primary language:** English (Swedish toggle available)
 
 ## Quick Links
 - `docs/product-brief.md` – goals, users, success measures, MVP scope
