@@ -38,6 +38,8 @@ jobs:
       - name: Build static site
         run: npm run build:pages
         working-directory: web
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

@@ -44,25 +44,15 @@ The dev server runs on `http://localhost:5173`. Any changes to MDX files are pic
 - Keep commits small and focused; run `npm run lint` before opening a PR.
 
 ## Deployment (GitHub Pages)
-1. Set the base path to match your GitHub repository slug (default script assumes `internship-checklist`).
-2. Build and copy the SPA fallback:
+1. Enable GitHub Pages in the repository settings and choose `GitHub Actions` as the source.
+2. Push to `main`.
+   The workflow in `.github/workflows/deploy-pages.yml` builds from `web/`, sets `BASE_PATH` from the repository name automatically, and deploys `web/dist`.
+3. For a manual build, set the Pages base path explicitly and copy the SPA fallback:
    ```bash
    cd web
-   npm run build:pages
+   BASE_PATH=/your-repository-name/ npm run build:pages
    ```
-   This runs `tsc`, builds with `BASE_PATH=/internship-checklist`, and duplicates `dist/index.html` to `dist/404.html` for React Router support.
-3. Publish the contents of `web/dist` to the `gh-pages` branch.
-   - Automated: enable GitHub Pages and let `.github/workflows/deploy-pages.yml` run on pushes to `main`.
-   - Manual: copy `web/dist` into a `gh-pages` branch and push if you need a one-off build.
-
-If your repository name differs, change the base path in `package.json` (`build:pages` script) or run
-
-```bash
-BASE_PATH=/ditt-repo-namn npm run build
-node -e "require('fs').copyFileSync('dist/index.html','dist/404.html')"
-```
-
-before pushing the build artefacts.
+   `npm run build:pages` runs `tsc`, builds with the provided `BASE_PATH`, and duplicates `dist/index.html` to `dist/404.html` for React Router support on GitHub Pages.
 
 ## Roadmap at a Glance
 1. Validate the staged plan flow and gather feedback from students.

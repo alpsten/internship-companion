@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:pages": "tsc && cross-env BASE_PATH=/internship-checklist vite build && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\"",
+    "build:pages": "tsc && vite build && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\"",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --max-warnings 0",
     "format": "prettier --check ."
