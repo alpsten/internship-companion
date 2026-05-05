@@ -2,3 +2,7 @@ node_modules/
 .DS_Store
 .idea/
 web/dist/
+backend/target/
+backend/.env
+backend/.env.*
+!backend/.env.example
