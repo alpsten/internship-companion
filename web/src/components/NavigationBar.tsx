@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 import { useLocale } from '../i18n/LocaleContext';
 import { siteConfig, siteShellClassName } from '../siteConfig';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -17,20 +18,33 @@ const navCopy = {
     plan: 'Planering',
     resources: 'Resurser',
     faq: 'FAQ',
-    about: 'Om'
+    about: 'Om',
+    account: 'Konto',
+    login: 'Logga in',
+    logout: 'Logga ut'
   },
   en: {
     home: 'Home',
     plan: 'Planning',
     resources: 'Resources',
     faq: 'FAQ',
-    about: 'About'
+    about: 'About',
+    account: 'Account',
+    login: 'Log in',
+    logout: 'Log out'
   }
 };
 
 const NavigationBar = () => {
   const { locale } = useLocale();
+  const { isAuthenticated, logout, user } = useAuth();
+  const navigate = useNavigate();
   const copy = navCopy[locale] ?? navCopy.sv;
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/auth');
+  };
 
   return (
     <header className="sticky top-0 z-30 bg-white/80 backdrop-blur dark:bg-slate-900/80">
@@ -57,6 +71,24 @@ const NavigationBar = () => {
           <NavLink className={linkClasses} to="/about">
             {copy.about}
           </NavLink>
+          {isAuthenticated ? (
+            <>
+              <NavLink className={linkClasses} to="/account">
+                {user?.name ?? copy.account}
+              </NavLink>
+              <button
+                className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:text-primary dark:text-slate-300 dark:hover:text-primary"
+                onClick={() => void handleLogout()}
+                type="button"
+              >
+                {copy.logout}
+              </button>
+            </>
+          ) : (
+            <NavLink className={linkClasses} to="/auth">
+              {copy.login}
+            </NavLink>
+          )}
           <ThemeToggle />
           <LanguageSwitcher />
         </nav>
