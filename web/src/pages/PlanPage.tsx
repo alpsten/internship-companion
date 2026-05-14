@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { trackEvent } from '../analytics';
+import { getProgress, updateProgress } from '../auth';
+import { useAuth } from '../auth/AuthContext';
 import { getPlanDefaultTips, getPlanStages, getRecommendedResources } from '../content';
 import { useLocale } from '../i18n/LocaleContext';
 import type { Locale } from '../content';
@@ -26,6 +28,10 @@ type PlanCopy = {
   recommendedResourcesEmpty: string;
   openResourceLabel: string;
   tipsTitle: string;
+  localProgressStatus: string;
+  accountProgressStatus: string;
+  savingProgressStatus: string;
+  progressSyncError: string;
 };
 
 const planCopyByLocale: Record<Locale, PlanCopy> = {
@@ -46,7 +52,12 @@ const planCopyByLocale: Record<Locale, PlanCopy> = {
     recommendedResourcesEmpty:
       'Vi fyller på med fler resurser för det här steget – tipsa gärna om vad som skulle hjälpa dig mest!',
     openResourceLabel: 'Öppna rekommenderad resurs',
-    tipsTitle: 'Tips'
+    tipsTitle: 'Tips',
+    localProgressStatus: 'Sparas lokalt i den här webbläsaren.',
+    accountProgressStatus: 'Sparas på ditt konto.',
+    savingProgressStatus: 'Sparar progress...',
+    progressSyncError:
+      'Kunde inte synka med backend. Ändringen sparas lokalt tills anslutningen fungerar igen.'
   },
   en: {
     badge: 'Plan your internship',
@@ -65,32 +76,54 @@ const planCopyByLocale: Record<Locale, PlanCopy> = {
     recommendedResourcesEmpty:
       'More resources for this stage are on the way—tell us what would help you the most!',
     openResourceLabel: 'Open recommended resource',
-    tipsTitle: 'Tips'
+    tipsTitle: 'Tips',
+    localProgressStatus: 'Saved locally in this browser.',
+    accountProgressStatus: 'Saved to your account.',
+    savingProgressStatus: 'Saving progress...',
+    progressSyncError:
+      'Could not sync with the backend. Changes are saved locally until the connection works again.'
   }
 };
 
+function readStoredCompletedTasks() {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  const stored = window.localStorage.getItem(PLAN_STORAGE_KEY);
+  if (!stored) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(stored);
+    return normalizeTaskIds(Array.isArray(parsed) ? parsed : []);
+  } catch (error) {
+    console.warn('Kunde inte läsa sparade plan-steg', error);
+    return [];
+  }
+}
+
+function normalizeTaskIds(taskIds: string[]) {
+  return Array.from(new Set(taskIds.filter((taskId) => typeof taskId === 'string' && taskId)));
+}
+
 const PlanPage = ({ onOpenResource }: PlanPageProps) => {
   const { locale } = useLocale();
+  const { isAuthenticated, isLoading: isAuthLoading, token } = useAuth();
   const copy = planCopyByLocale[locale] ?? planCopyByLocale.sv;
   const stages = useMemo(() => getPlanStages(locale), [locale]);
   const [activeStageId, setActiveStageId] = useState<string>(stages[0]?.id ?? '');
-  const [completedTasks, setCompletedTasks] = useState<string[]>([]);
+  const [completedTasks, setCompletedTasks] = useState<string[]>(() => readStoredCompletedTasks());
+  const [isAccountProgressReady, setIsAccountProgressReady] = useState(false);
+  const [isSavingProgress, setIsSavingProgress] = useState(false);
+  const [progressSyncError, setProgressSyncError] = useState<string | null>(null);
+  const lastSyncedProgressRef = useRef<string | null>(null);
   const fallbackTips = useMemo(() => getPlanDefaultTips(locale), [locale]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    const stored = window.localStorage.getItem(PLAN_STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as string[];
-        setCompletedTasks(parsed);
-      } catch (error) {
-        console.warn('Kunde inte läsa sparade plan-steg', error);
-      }
-    }
-  }, []);
+  const validTaskIds = useMemo(
+    () => new Set(stages.flatMap((stage) => stage.tasks.map((task) => task.id))),
+    [stages]
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -98,6 +131,118 @@ const PlanPage = ({ onOpenResource }: PlanPageProps) => {
     }
     window.localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(completedTasks));
   }, [completedTasks]);
+
+  useEffect(() => {
+    setCompletedTasks((prev) => {
+      const validTasks = prev.filter((taskId) => validTaskIds.has(taskId));
+      return validTasks.length === prev.length ? prev : validTasks;
+    });
+  }, [validTaskIds]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (isAuthLoading) {
+      return;
+    }
+
+    if (!isAuthenticated || !token) {
+      setIsAccountProgressReady(false);
+      setIsSavingProgress(false);
+      setProgressSyncError(null);
+      lastSyncedProgressRef.current = null;
+      return;
+    }
+
+    const authToken = token;
+
+    async function loadAccountProgress() {
+      setIsAccountProgressReady(false);
+      setProgressSyncError(null);
+
+      try {
+        const response = await getProgress(authToken);
+        const accountTasks = normalizeTaskIds(response.completedTaskIds).filter((taskId) =>
+          validTaskIds.has(taskId)
+        );
+        const localTasks = readStoredCompletedTasks().filter((taskId) => validTaskIds.has(taskId));
+        const shouldMigrateLocalProgress = accountTasks.length === 0 && localTasks.length > 0;
+        const nextTasks = shouldMigrateLocalProgress ? localTasks : accountTasks;
+
+        if (!isCancelled) {
+          lastSyncedProgressRef.current = JSON.stringify(accountTasks);
+          setCompletedTasks(nextTasks);
+          setIsAccountProgressReady(true);
+        }
+      } catch {
+        if (!isCancelled) {
+          setProgressSyncError(copy.progressSyncError);
+          setIsAccountProgressReady(false);
+        }
+      }
+    }
+
+    void loadAccountProgress();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [copy.progressSyncError, isAuthenticated, isAuthLoading, token, validTaskIds]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (!isAuthenticated || !token || !isAccountProgressReady) {
+      return;
+    }
+
+    const authToken = token;
+    const progressSnapshot = normalizeTaskIds(completedTasks).filter((taskId) =>
+      validTaskIds.has(taskId)
+    );
+    const progressKey = JSON.stringify(progressSnapshot);
+
+    if (lastSyncedProgressRef.current === progressKey) {
+      return;
+    }
+
+    async function saveAccountProgress() {
+      setIsSavingProgress(true);
+      setProgressSyncError(null);
+
+      try {
+        const response = await updateProgress(authToken, progressSnapshot);
+        const savedTasks = normalizeTaskIds(response.completedTaskIds).filter((taskId) =>
+          validTaskIds.has(taskId)
+        );
+
+        if (!isCancelled) {
+          lastSyncedProgressRef.current = JSON.stringify(savedTasks);
+        }
+      } catch {
+        if (!isCancelled) {
+          setProgressSyncError(copy.progressSyncError);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsSavingProgress(false);
+        }
+      }
+    }
+
+    void saveAccountProgress();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    completedTasks,
+    copy.progressSyncError,
+    isAccountProgressReady,
+    isAuthenticated,
+    token,
+    validTaskIds
+  ]);
 
   useEffect(() => {
     if (!stages.some((stage) => stage.id === activeStageId)) {
@@ -121,6 +266,13 @@ const PlanPage = ({ onOpenResource }: PlanPageProps) => {
     ? Math.round((stageCompletedCount / activeTasks.length) * 100)
     : 0;
   const stageTips = activeStage?.tips?.length ? activeStage.tips : fallbackTips;
+  const progressStatus = progressSyncError
+    ? progressSyncError
+    : isAuthenticated
+      ? isSavingProgress
+        ? copy.savingProgressStatus
+        : copy.accountProgressStatus
+      : copy.localProgressStatus;
 
   const handleToggle = (taskId: string) => {
     setCompletedTasks((prev) => {
@@ -132,7 +284,9 @@ const PlanPage = ({ onOpenResource }: PlanPageProps) => {
         completed
       });
 
-      return completed ? [...prev, taskId] : prev.filter((value) => value !== taskId);
+      return completed
+        ? normalizeTaskIds([...prev, taskId])
+        : prev.filter((value) => value !== taskId);
     });
   };
 
@@ -163,6 +317,7 @@ const PlanPage = ({ onOpenResource }: PlanPageProps) => {
                 {copy.progressCount(completedCount, totalTasks)}
               </div>
             </div>
+            <p className="mt-3 text-xs text-white/70">{progressStatus}</p>
           </div>
         </div>
       </section>
