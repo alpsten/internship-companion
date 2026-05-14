@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import NavigationBar from './components/NavigationBar';
 import ResourceModal from './components/ResourceModal';
 import SiteFooter from './components/SiteFooter';
@@ -10,10 +10,45 @@ import PlanPage from './pages/PlanPage';
 import ResourcesPage from './pages/ResourcesPage';
 import FaqPage from './pages/FaqPage';
 import AboutPage from './pages/AboutPage';
+import AuthPage from './pages/AuthPage';
+import AccountPage from './pages/AccountPage';
+import { useAuth } from './auth/AuthContext';
 import { useLocale } from './i18n/LocaleContext';
+import { siteShellClassName } from './siteConfig';
+
+type ProtectedRouteProps = {
+  children: ReactNode;
+};
+
+const loadingCopyByLocale = {
+  sv: 'Kontrollerar inloggning...',
+  en: 'Checking sign-in...'
+} as const;
+
+function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const { locale } = useLocale();
+  const location = useLocation();
+  const loadingCopy = loadingCopyByLocale[locale] ?? loadingCopyByLocale.sv;
+
+  if (isLoading) {
+    return (
+      <main className={`${siteShellClassName} flex flex-1 items-center justify-center py-16`}>
+        <p className="text-sm text-slate-600 dark:text-slate-300">{loadingCopy}</p>
+      </main>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate replace to="/auth" state={{ from: location }} />;
+  }
+
+  return children;
+}
 
 function App() {
   const { locale } = useLocale();
+  const { isAuthenticated } = useAuth();
   const [activeResource, setActiveResource] = useState<string | null>(null);
   const [resourceTrigger, setResourceTrigger] = useState<HTMLElement | null>(null);
   const location = useLocation();
@@ -68,38 +103,82 @@ function App() {
 
   return (
     <div className="flex min-h-screen flex-col bg-surface text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
-      <NavigationBar />
+      {isAuthenticated ? <NavigationBar /> : null}
       <div className="flex-1">
         <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/plan" element={<PlanPage onOpenResource={handleOpenResource} />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <LandingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/plan"
+            element={
+              <ProtectedRoute>
+                <PlanPage onOpenResource={handleOpenResource} />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/resources"
-            element={<ResourcesPage onOpenResource={handleOpenResource} />}
+            element={
+              <ProtectedRoute>
+                <ResourcesPage onOpenResource={handleOpenResource} />
+              </ProtectedRoute>
+            }
           />
-          <Route path="/faq" element={<FaqPage />} />
-          <Route path="/about" element={<AboutPage />} />
+          <Route
+            path="/faq"
+            element={
+              <ProtectedRoute>
+                <FaqPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <ProtectedRoute>
+                <AboutPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <AccountPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate replace to={isAuthenticated ? '/' : '/auth'} />} />
         </Routes>
       </div>
-      <SiteFooter />
+      {isAuthenticated ? <SiteFooter /> : null}
 
-      <ResourceModal
-        resource={
-          selectedResource
-            ? {
-                slug: selectedResource.slug,
-                title: selectedResource.title,
-                type: selectedResource.type,
-                downloadLabel: selectedResource.downloadLabel,
-                downloadUrl: selectedResource.downloadUrl,
-                downloads: selectedResource.downloads,
-                Content: selectedResource.Content
-              }
-            : null
-        }
-        restoreFocusElement={resourceTrigger}
-        onClose={handleCloseResource}
-      />
+      {isAuthenticated ? (
+        <ResourceModal
+          resource={
+            selectedResource
+              ? {
+                  slug: selectedResource.slug,
+                  title: selectedResource.title,
+                  type: selectedResource.type,
+                  downloadLabel: selectedResource.downloadLabel,
+                  downloadUrl: selectedResource.downloadUrl,
+                  downloads: selectedResource.downloads,
+                  Content: selectedResource.Content
+                }
+              : null
+          }
+          restoreFocusElement={resourceTrigger}
+          onClose={handleCloseResource}
+        />
+      ) : null}
     </div>
   );
 }
