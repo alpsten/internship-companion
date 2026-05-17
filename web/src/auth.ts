@@ -75,10 +75,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function register(payload: RegisterPayload): Promise<AuthResponse> {
-  return request<AuthResponse>('/api/auth/register', {
+export type RegisterResponse = { email: string };
+
+export async function register(payload: RegisterPayload): Promise<RegisterResponse> {
+  return request<RegisterResponse>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload)
+  });
+}
+
+export async function verifyEmail(email: string, code: string): Promise<AuthResponse> {
+  return request<AuthResponse>('/api/auth/verify', {
+    method: 'POST',
+    body: JSON.stringify({ email, code })
+  });
+}
+
+export async function resendVerification(email: string): Promise<void> {
+  return request<void>('/api/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email })
   });
 }
 

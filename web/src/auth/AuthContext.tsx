@@ -11,6 +11,8 @@ import {
   login as loginRequest,
   logout as logoutRequest,
   register as registerRequest,
+  verifyEmail as verifyEmailRequest,
+  resendVerification as resendVerificationRequest,
   type AuthUser,
   type LoginPayload,
   type RegisterPayload
@@ -22,7 +24,9 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (payload: LoginPayload) => Promise<void>;
-  register: (payload: RegisterPayload) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<string>;
+  verifyEmail: (email: string, code: string) => Promise<void>;
+  resendVerification: (email: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -102,8 +106,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
       },
       async register(payload: RegisterPayload) {
         const response = await registerRequest(payload);
+        return response.email;
+      },
+      async verifyEmail(email: string, code: string) {
+        const response = await verifyEmailRequest(email, code);
         setToken(response.token);
         setUser(response.user);
+      },
+      async resendVerification(email: string) {
+        await resendVerificationRequest(email);
       },
       async logout() {
         if (token) {

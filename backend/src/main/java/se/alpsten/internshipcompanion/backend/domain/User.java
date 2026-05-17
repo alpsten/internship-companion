@@ -29,6 +29,15 @@ public class User {
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
+  @Column(name = "email_verified", nullable = false)
+  private boolean emailVerified = false;
+
+  @Column(name = "verification_code")
+  private String verificationCode;
+
+  @Column(name = "verification_expires_at")
+  private Instant verificationExpiresAt;
+
   protected User() {
   }
 
@@ -45,23 +54,16 @@ public class User {
     }
   }
 
-  public UUID getId() {
-    return id;
-  }
+  public UUID getId() { return id; }
+  public String getName() { return name; }
+  public String getEmail() { return email; }
+  public String getPasswordHash() { return passwordHash; }
+  public Instant getCreatedAt() { return createdAt; }
+  public boolean isEmailVerified() { return emailVerified; }
+  public String getVerificationCode() { return verificationCode; }
+  public Instant getVerificationExpiresAt() { return verificationExpiresAt; }
 
-  public String getName() {
-    return name;
-  }
-
-  public String getEmail() {
-    return email;
-  }
-
-  public String getPasswordHash() {
-    return passwordHash;
-  }
-
-  public Instant getCreatedAt() {
-    return createdAt;
-  }
+  public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
+  public void setVerificationCode(String verificationCode) { this.verificationCode = verificationCode; }
+  public void setVerificationExpiresAt(Instant verificationExpiresAt) { this.verificationExpiresAt = verificationExpiresAt; }
 }

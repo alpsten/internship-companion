@@ -3,6 +3,7 @@ package se.alpsten.internshipcompanion.backend.controller;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,9 +25,21 @@ public class AuthController {
 
   @PostMapping("/register")
   @ResponseStatus(HttpStatus.CREATED)
-  public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
-    AuthService.AuthResult result = authService.register(request.name(), request.email(), request.password());
+  public RegisterResponse register(@Valid @RequestBody RegisterRequest request) {
+    authService.register(request.name(), request.email(), request.password());
+    return new RegisterResponse(request.email());
+  }
+
+  @PostMapping("/verify")
+  public AuthResponse verify(@Valid @RequestBody VerifyRequest request) {
+    AuthService.AuthResult result = authService.verifyEmail(request.email(), request.code());
     return AuthResponse.from(result);
+  }
+
+  @PostMapping("/resend-verification")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+    authService.resendVerification(request.email());
   }
 
   @PostMapping("/login")
@@ -48,14 +61,23 @@ record RegisterRequest(
     @NotBlank(message = "name is required") String name,
     @Email(message = "email must be valid") @NotBlank(message = "email is required") String email,
     @NotBlank(message = "password is required") String password
-) {
-}
+) {}
+
+record VerifyRequest(
+    @Email(message = "email must be valid") @NotBlank(message = "email is required") String email,
+    @NotBlank(message = "code is required") @Size(min = 6, max = 6, message = "code must be 6 digits") String code
+) {}
+
+record ResendVerificationRequest(
+    @Email(message = "email must be valid") @NotBlank(message = "email is required") String email
+) {}
 
 record LoginRequest(
     @Email(message = "email must be valid") @NotBlank(message = "email is required") String email,
     @NotBlank(message = "password is required") String password
-) {
-}
+) {}
+
+record RegisterResponse(String email) {}
 
 record AuthResponse(String token, UserResponse user) {
 

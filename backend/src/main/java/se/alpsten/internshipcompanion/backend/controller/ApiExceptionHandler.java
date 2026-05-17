@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import se.alpsten.internshipcompanion.backend.service.ConflictException;
 import se.alpsten.internshipcompanion.backend.service.DomainValidationException;
 import se.alpsten.internshipcompanion.backend.service.UnauthorizedException;
+import se.alpsten.internshipcompanion.backend.service.UnverifiedEmailException;
 import se.alpsten.internshipcompanion.backend.service.ValidationException;
 
 @RestControllerAdvice
@@ -37,6 +38,11 @@ public class ApiExceptionHandler {
   @ExceptionHandler(UnauthorizedException.class)
   public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException exception) {
     return errorResponse(HttpStatus.UNAUTHORIZED, exception.getMessage());
+  }
+
+  @ExceptionHandler(UnverifiedEmailException.class)
+  public ResponseEntity<ErrorResponse> handleUnverified(UnverifiedEmailException exception) {
+    return errorResponse(HttpStatus.FORBIDDEN, exception.getMessage());
   }
 
   private ResponseEntity<ErrorResponse> errorResponse(HttpStatus status, String message) {
