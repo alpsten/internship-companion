@@ -13,24 +13,24 @@ public class EmailService {
   private final RestClient restClient;
   private final String apiKey;
 
-  public EmailService(@Value("${resend.api-key}") String apiKey) {
+  public EmailService(@Value("${brevo.api-key}") String apiKey) {
     this.apiKey = apiKey;
     this.restClient = RestClient.create();
   }
 
   public void sendVerificationEmail(String toEmail, String code) {
     Map<String, Object> body = Map.of(
-        "from", "Internship Companion <onboarding@resend.dev>",
-        "to", List.of(toEmail),
+        "sender", Map.of("name", "Internship Companion", "email", "noreply.internshipcompanion@gmail.com"),
+        "to", List.of(Map.of("email", toEmail)),
         "subject", "Your verification code",
-        "text",
+        "textContent",
         "Hi!\n\nYour verification code is: " + code
             + "\n\nThis code expires in 15 minutes.\n\n— The Internship Companion team"
     );
 
     restClient.post()
-        .uri("https://api.resend.com/emails")
-        .header("Authorization", "Bearer " + apiKey)
+        .uri("https://api.brevo.com/v3/smtp/email")
+        .header("api-key", apiKey)
         .contentType(MediaType.APPLICATION_JSON)
         .body(body)
         .retrieve()
